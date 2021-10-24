@@ -11,7 +11,7 @@ type deck struct {
 
 func newDeck() *deck {
 	d := make([]*tile, 0)
-	for _, edges := range Tiles {
+	for _, edges := range tiles {
 		d = append(d, newTile(edges))
 	}
 	return &deck{deck: d}

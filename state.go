@@ -16,8 +16,8 @@ type state struct {
 	tokens  map[string]*token
 	hands   map[string]*hand
 	dragon  string
-	active  map[string]bool // players that have placed and still alive
-	alive   map[string]bool // players that are alive
+	active  map[string]bool // teams that have placed and still alive
+	alive   map[string]bool // teams that are alive
 }
 
 func newState(teams []string) *state {
@@ -160,17 +160,17 @@ func (s *state) PlaceTile(team, tile string, row, column int) error {
 func (s *state) moveTokens() {
 	moved := 0
 	move := map[string]string{"A": "F", "B": "E", "C": "H", "D": "G", "E": "B", "F": "A", "G": "D", "H": "C"}
-	for player, token := range s.tokens {
-		if s.active[player] {
+	for team, token := range s.tokens {
+		if s.active[team] {
 			t := s.board.board[token.Row][token.Col]
-			if !mapContainsVal(t.Paths, player) {
+			if !mapContainsVal(t.Paths, team) {
 				// first placement so move through the just placed tile
 				destination := t.GetDestination(token.Notch)
-				t.Paths[token.Notch+destination] = player
+				t.Paths[token.Notch+destination] = team
 				token.Notch = destination
 				// token was moved
 				moved++
-			} else if s.collided(s.tokens, player, token) {
+			} else if s.collided(s.tokens, team, token) {
 				// token collided with other token
 				continue
 			} else {
@@ -196,7 +196,7 @@ func (s *state) moveTokens() {
 				// where the token ends up on the next tile
 				endNotch := nextTile.GetDestination(startNotch)
 				// update token location
-				nextTile.Paths[startNotch+endNotch] = player
+				nextTile.Paths[startNotch+endNotch] = team
 				token.Notch = endNotch
 				// token was moved
 				moved++
@@ -208,9 +208,9 @@ func (s *state) moveTokens() {
 	}
 }
 
-func (s *state) collided(tokens map[string]*token, player string, token *token) bool {
-	for player2, token2 := range tokens {
-		if player != player2 && (token.collided(token2) || token.equals(token2)) {
+func (s *state) collided(tokens map[string]*token, team string, token *token) bool {
+	for team2, token2 := range tokens {
+		if team != team2 && (token.collided(token2) || token.equals(token2)) {
 			return true
 		}
 	}
@@ -223,31 +223,31 @@ func (s *state) updateAlive() {
 	}
 	// alive before checking
 	initialAlive := make([]string, 0)
-	for _, player := range s.teams {
-		if s.alive[player] {
-			initialAlive = append(initialAlive, player)
+	for _, team := range s.teams {
+		if s.alive[team] {
+			initialAlive = append(initialAlive, team)
 		}
 	}
 	// update who is still alive
-	for player, token := range s.tokens {
-		if s.active[player] {
+	for team, token := range s.tokens {
+		if s.active[team] {
 			if (token.Row == 0 && strings.Contains("AB", token.Notch)) ||
 				(token.Row == rows-1 && strings.Contains("EF", token.Notch)) ||
 				(token.Col == 0 && strings.Contains("GH", token.Notch)) ||
 				(token.Col == columns-1 && strings.Contains("CD", token.Notch)) {
 				// check on board edge
-				s.setLost(player)
-			} else if s.collided(s.tokens, player, token) {
+				s.setLost(team)
+			} else if s.collided(s.tokens, team, token) {
 				// check if collided with another token
-				s.setLost(player)
+				s.setLost(team)
 			}
 		}
 	}
 	// who is still alive
 	stillAlive := make([]string, 0)
-	for _, player := range s.teams {
-		if s.alive[player] {
-			stillAlive = append(stillAlive, player)
+	for _, team := range s.teams {
+		if s.alive[team] {
+			stillAlive = append(stillAlive, team)
 		}
 	}
 	if len(stillAlive) == 0 {
@@ -256,7 +256,7 @@ func (s *state) updateAlive() {
 	} else if len(stillAlive) == 1 {
 		// one alive so they win
 		s.winners = stillAlive
-	} else if s.board.getTileCount() == len(Tiles) {
+	} else if s.board.getTileCount() == len(tiles) {
 		// all tiles have been placed remaining alive are winners
 		s.winners = stillAlive
 	}
@@ -297,8 +297,8 @@ func (s *state) getNextTurn(turn string) string {
 	if len(s.winners) > 0 {
 		return nextTurn
 	}
-	for idx, player := range s.teams {
-		if player == turn {
+	for idx, team := range s.teams {
+		if team == turn {
 			nextTurn = s.teams[(idx+1)%len(s.teams)]
 			if !s.alive[nextTurn] {
 				return s.getNextTurn(nextTurn)
@@ -309,16 +309,16 @@ func (s *state) getNextTurn(turn string) string {
 	return nextTurn
 }
 
-func (s *state) setLost(player string) {
-	s.alive[player] = false
-	s.active[player] = false
-	s.deck.Add(s.hands[player].hand...)
-	s.hands[player].Clear()
+func (s *state) setLost(team string) {
+	s.alive[team] = false
+	s.active[team] = false
+	s.deck.Add(s.hands[team].hand...)
+	s.hands[team].Clear()
 	if s.aliveCount() <= 0 {
 		return
 	}
 	next := s.getNextTurn(s.turn)
-	if s.dragon == player && len(s.hands[next].hand) < 3 {
+	if s.dragon == team && len(s.hands[next].hand) < 3 {
 		s.dragon = next
 	}
 }

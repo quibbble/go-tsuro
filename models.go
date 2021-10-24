@@ -23,12 +23,12 @@ type PlaceTileActionDetails struct {
 type TsuroSnapshotDetails struct {
 	Board          [][]*tile
 	TilesRemaining int
-	Hand           []*tile
+	Hands          map[string][]*tile
 	Tokens         map[string]*token
 	Dragon         string
 }
 
-var Tiles = []string{
+var tiles = []string{
 	"ABCDEFGH", "AHBGCDEF", "AHBCDGEF", "AHBCDEFG", "AGBHCDEF",
 	"ABCHDGEF", "ABCGDHEF", "AGBCDHEF", "ABCGDEFH", "AGBCDEFH",
 	"ACBGDEFH", "ACBGDHEF", "ACBHDGEF", "ADBHCGEF", "ADBGCHEF",

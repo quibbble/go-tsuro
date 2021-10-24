@@ -83,24 +83,35 @@ func (t *Tsuro) Do(action bg.BoardGameAction) error {
 	return nil
 }
 
-func (t *Tsuro) GetSnapshot(team string) (bg.BoardGameSnapshot, error) {
-	if !contains(t.state.teams, team) {
-		return bg.BoardGameSnapshot{}, &bgerr.Error{
-			Err:    fmt.Errorf("%s not a valid team", team),
-			Status: bgerr.StatusUnknownTeam,
+func (t *Tsuro) GetSnapshot(team ...string) (*bg.BoardGameSnapshot, error) {
+	if len(team) > 1 {
+		return nil, &bgerr.Error{
+			Err:    fmt.Errorf("get snapshot requires zero or one team"),
+			Status: bgerr.StatusTooManyTeams,
 		}
 	}
-	return bg.BoardGameSnapshot{
-		Turn:    t.state.turn,
-		Teams:   t.state.teams,
-		Winners: t.state.winners,
-		MoreData: TsuroSnapshotDetails{
-			Board:          t.state.board.board,
-			TilesRemaining: len(t.state.deck.deck),
-			Hand:           t.state.hands[team].hand,
-			Tokens:         t.state.tokens,
-			Dragon:         t.state.dragon,
-		},
-		Actions: t.actions,
+	hands := make(map[string][]*tile)
+	for t, hand := range t.state.hands {
+		if len(team) == 0 {
+			hands[t] = hand.hand
+		} else {
+			if team[0] == t {
+				hands[t] = hand.hand
+			}
+		}
+	}
+	details := TsuroSnapshotDetails{
+		Board:          t.state.board.board,
+		TilesRemaining: len(t.state.deck.deck),
+		Hands:          hands,
+		Tokens:         t.state.tokens,
+		Dragon:         t.state.dragon,
+	}
+	return &bg.BoardGameSnapshot{
+		Turn:     t.state.turn,
+		Teams:    t.state.teams,
+		Winners:  t.state.winners,
+		MoreData: details,
+		Actions:  t.actions,
 	}, nil
 }
