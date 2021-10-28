@@ -20,11 +20,11 @@ type state struct {
 	alive   map[string]bool // teams that are alive
 }
 
-func newState(teams []string) *state {
+func newState(teams []string, random *rand.Rand) *state {
 	hands := make(map[string]*hand)
 	tokens := make(map[string]*token)
 	alive := make(map[string]bool)
-	deck := newDeck()
+	deck := newDeck(random)
 	for _, team := range teams {
 		hand := newHand()
 		for i := 0; i < 3; i++ {
@@ -32,7 +32,7 @@ func newState(teams []string) *state {
 			hand.Add(tile)
 		}
 		hands[team] = hand
-		token := uniqueRandomToken(tokens)
+		token := uniqueRandomToken(tokens, random)
 		tokens[team] = token
 		alive[team] = true
 	}
@@ -333,11 +333,11 @@ func (s *state) aliveCount() int {
 	return count
 }
 
-func uniqueRandomToken(tokens map[string]*token) *token {
-	token := RandomToken()
+func uniqueRandomToken(tokens map[string]*token, random *rand.Rand) *token {
+	token := randomToken(random)
 	for _, tok := range tokens {
 		if token.Row == tok.Row && token.Col == tok.Col {
-			return uniqueRandomToken(tokens)
+			return uniqueRandomToken(tokens, random)
 		}
 	}
 	return token

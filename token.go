@@ -13,13 +13,17 @@ type token struct {
 }
 
 func newToken(row, col int, notch string) *token {
-	return &token{Row: row, Col: col, Notch: notch}
+	return &token{
+		Row:   row,
+		Col:   col,
+		Notch: notch,
+	}
 }
 
-func RandomToken() *token {
+func randomToken(random *rand.Rand) *token {
 	options := "ABCDEFGH"
-	notch := string(options[rand.Intn(8)])                            // which notch to lie on
-	side := rand.Intn(int(math.Min(float64(rows), float64(columns)))) // which side to lie on
+	notch := string(options[random.Intn(8)])                            // which notch to lie on
+	side := random.Intn(int(math.Min(float64(rows), float64(columns)))) // which side to lie on
 	var row = 0
 	var col = 0
 	switch notch {

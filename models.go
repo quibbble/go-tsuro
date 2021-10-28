@@ -2,10 +2,9 @@ package go_tsuro
 
 // Action types
 const (
-	PlaceTile       = "PlaceTile"
-	RotateTileRight = "RotateTileRight"
-	RotateTileLeft  = "RotateRileLeft"
-	Reset           = "Reset"
+	ActionPlaceTile       = "PlaceTile"
+	ActionRotateTileRight = "RotateTileRight"
+	ActionRotateTileLeft  = "RotateRileLeft"
 )
 
 // RotateTileActionDetails is the action details for rotating a tile in hand

@@ -6,15 +6,21 @@ import (
 )
 
 type deck struct {
-	deck []*tile
+	deck   []*tile
+	random *rand.Rand
 }
 
-func newDeck() *deck {
+func newDeck(random *rand.Rand) *deck {
 	d := make([]*tile, 0)
 	for _, edges := range tiles {
 		d = append(d, newTile(edges))
 	}
-	return &deck{deck: d}
+	result := &deck{
+		deck:   d,
+		random: random,
+	}
+	result.Shuffle()
+	return result
 }
 
 func (d *deck) Remove(tile *tile) error {
@@ -46,7 +52,7 @@ func (d *deck) Draw() (*tile, error) {
 
 func (d *deck) Shuffle() {
 	for i := 0; i < len(d.deck); i++ {
-		r := rand.Intn(len(d.deck))
+		r := d.random.Intn(len(d.deck))
 		if i != r {
 			d.deck[r], d.deck[i] = d.deck[i], d.deck[r]
 		}

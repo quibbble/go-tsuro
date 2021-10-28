@@ -5,6 +5,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 	bg "github.com/quibbble/go-boardgame"
 	"github.com/quibbble/go-boardgame/pkg/bgerr"
+	"math/rand"
+	"time"
 )
 
 const (
@@ -15,9 +17,10 @@ const (
 type Tsuro struct {
 	state   *state
 	actions []*bg.BoardGameAction
+	seed    int64
 }
 
-func NewTsuro(options bg.BoardGameOptions) (*Tsuro, error) {
+func NewTsuro(options bg.BoardGameOptions, seed int64) (*Tsuro, error) {
 	if len(options.Teams) < minTeams {
 		return nil, &bgerr.Error{
 			Err:    fmt.Errorf("at least %d teams required to create a game of %s", minTeams, key),
@@ -30,14 +33,15 @@ func NewTsuro(options bg.BoardGameOptions) (*Tsuro, error) {
 		}
 	}
 	return &Tsuro{
-		state:   newState(options.Teams),
+		state:   newState(options.Teams, rand.New(rand.NewSource(seed))),
 		actions: make([]*bg.BoardGameAction, 0),
+		seed:    seed,
 	}, nil
 }
 
 func (t *Tsuro) Do(action bg.BoardGameAction) error {
 	switch action.ActionType {
-	case RotateTileRight:
+	case ActionRotateTileRight:
 		var details RotateTileActionDetails
 		if err := mapstructure.Decode(action.MoreDetails, &details); err != nil {
 			return &bgerr.Error{
@@ -48,7 +52,7 @@ func (t *Tsuro) Do(action bg.BoardGameAction) error {
 		if err := t.state.RotateTileRight(action.Team, details.Tile); err != nil {
 			return err
 		}
-	case RotateTileLeft:
+	case ActionRotateTileLeft:
 		var details RotateTileActionDetails
 		if err := mapstructure.Decode(action.MoreDetails, &details); err != nil {
 			return &bgerr.Error{
@@ -59,7 +63,7 @@ func (t *Tsuro) Do(action bg.BoardGameAction) error {
 		if err := t.state.RotateTileLeft(action.Team, details.Tile); err != nil {
 			return err
 		}
-	case PlaceTile:
+	case ActionPlaceTile:
 		var details PlaceTileActionDetails
 		if err := mapstructure.Decode(action.MoreDetails, &details); err != nil {
 			return &bgerr.Error{
@@ -71,9 +75,27 @@ func (t *Tsuro) Do(action bg.BoardGameAction) error {
 			return err
 		}
 		t.actions = append(t.actions, &action)
-	case Reset:
-		t.state = newState(t.state.teams)
+	case bg.ActionReset:
+		seed := time.Now().UnixNano()
+		t.state = newState(t.state.teams, rand.New(rand.NewSource(seed)))
 		t.actions = make([]*bg.BoardGameAction, 0)
+		t.seed = seed
+	case bg.ActionUndo:
+		if len(t.actions) > 0 {
+			undo, _ := NewTsuro(bg.BoardGameOptions{Teams: t.state.teams}, t.seed)
+			for _, a := range t.actions[:len(t.actions)-1] {
+				if err := undo.Do(*a); err != nil {
+					return err
+				}
+			}
+			t.state = undo.state
+			t.actions = undo.actions
+		} else {
+			return &bgerr.Error{
+				Err:    fmt.Errorf("no actions to undo"),
+				Status: bgerr.StatusInvalidAction,
+			}
+		}
 	default:
 		return &bgerr.Error{
 			Err:    fmt.Errorf("cannot process action type %s", action.ActionType),
@@ -114,4 +136,8 @@ func (t *Tsuro) GetSnapshot(team ...string) (*bg.BoardGameSnapshot, error) {
 		MoreData: details,
 		Actions:  t.actions,
 	}, nil
+}
+
+func (t *Tsuro) GetSeed() int64 {
+	return t.seed
 }

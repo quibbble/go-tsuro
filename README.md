@@ -12,7 +12,7 @@ To play a game create a new Tsuro instance:
 ```go
 game, err := NewTsuro(bg.BoardGameOptions{
     Teams: []string{"TeamA", "TeamB"} // must contain at least 2 and at most 8 teams
-})
+}, 123)
 ```
 
 To rotate a tile in your hand do the following action:
