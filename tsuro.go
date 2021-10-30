@@ -129,11 +129,16 @@ func (t *Tsuro) GetSnapshot(team ...string) (*bg.BoardGameSnapshot, error) {
 		Tokens:         t.state.tokens,
 		Dragon:         t.state.dragon,
 	}
+	var targets []*bg.BoardGameAction
+	if len(t.state.winners) == 0 {
+		targets = t.state.targets(team...)
+	}
 	return &bg.BoardGameSnapshot{
 		Turn:     t.state.turn,
 		Teams:    t.state.teams,
 		Winners:  t.state.winners,
 		MoreData: details,
+		Targets:  targets,
 		Actions:  t.actions,
 	}, nil
 }

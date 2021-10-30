@@ -2,6 +2,7 @@ package go_tsuro
 
 import (
 	"fmt"
+	bg "github.com/quibbble/go-boardgame"
 	"github.com/quibbble/go-boardgame/pkg/bgerr"
 	"math/rand"
 	"strings"
@@ -331,6 +332,74 @@ func (s *state) aliveCount() int {
 		}
 	}
 	return count
+}
+
+func (s *state) targets(team ...string) []*bg.BoardGameAction {
+	targets := make([]*bg.BoardGameAction, 0)
+	// rotate tile actions
+	if len(team) == 0 {
+		for _, t := range s.teams {
+			for _, tile := range s.hands[t].hand {
+				targets = append(targets, &bg.BoardGameAction{
+					Team:       s.turn,
+					ActionType: ActionRotateTileLeft,
+					MoreDetails: RotateTileActionDetails{
+						Tile: tile.Edges,
+					},
+				}, &bg.BoardGameAction{
+					Team:       s.turn,
+					ActionType: ActionRotateTileRight,
+					MoreDetails: RotateTileActionDetails{
+						Tile: tile.Edges,
+					},
+				})
+			}
+		}
+	} else if len(team) == 1 {
+		for _, tile := range s.hands[team[0]].hand {
+			targets = append(targets, &bg.BoardGameAction{
+				Team:       s.turn,
+				ActionType: ActionRotateTileLeft,
+				MoreDetails: RotateTileActionDetails{
+					Tile: tile.Edges,
+				},
+			}, &bg.BoardGameAction{
+				Team:       s.turn,
+				ActionType: ActionRotateTileRight,
+				MoreDetails: RotateTileActionDetails{
+					Tile: tile.Edges,
+				},
+			})
+		}
+	}
+	// place tile actions
+	if len(team) == 0 || (len(team) == 1 && team[0] == s.turn) {
+		row := s.tokens[s.turn].Row
+		col := s.tokens[s.turn].Col
+		switch s.tokens[s.turn].Notch {
+		case "A", "B":
+			row++
+		case "C", "D":
+			col++
+		case "E", "F":
+			row--
+		case "G", "H":
+			col--
+		default:
+		}
+		for _, tile := range s.hands[s.turn].hand {
+			targets = append(targets, &bg.BoardGameAction{
+				Team:       s.turn,
+				ActionType: ActionPlaceTile,
+				MoreDetails: PlaceTileActionDetails{
+					Row:    row,
+					Column: col,
+					Tile:   tile.Edges,
+				},
+			})
+		}
+	}
+	return targets
 }
 
 func uniqueRandomToken(tokens map[string]*token, random *rand.Rand) *token {
