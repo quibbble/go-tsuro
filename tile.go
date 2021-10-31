@@ -52,8 +52,12 @@ func (t *tile) RotateLeft() {
 }
 
 func (t *tile) equals(t2 *tile) bool {
-	if t.Edges == t2.Edges {
-		return true
+	copied := newTile(t.Edges)
+	for i := 0; i < 4; i++ {
+		if copied.Edges == t2.Edges {
+			return true
+		}
+		copied.RotateRight()
 	}
 	return false
 }
