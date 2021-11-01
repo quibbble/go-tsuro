@@ -10,14 +10,16 @@ Check out [quibbble.com](https://quibbble.com/paths) if you wish to view and pla
 
 To play a game create a new Tsuro instance:
 ```go
-game, err := NewTsuro(bg.BoardGameOptions{
-    Teams: []string{"TeamA", "TeamB"} // must contain at least 2 and at most 8 teams
-}, 123)
+builder := Builder{}
+game, err := builder.Create(&bg.BoardGameOptions{
+    Teams: []string{"TeamA", "TeamB"}, // must contain at least 2 and at most 8 teams
+    Seed: 123,                         // seed used to generate deterministic randomness
+})
 ```
 
 To rotate a tile in your hand do the following action:
 ```go
-err := game.Do(bg.BoardGameAction{
+err := game.Do(&bg.BoardGameAction{
     Team: "TeamA",
     ActionType: "RotateTileRight", // can also be "RotateTileLeft"
     MoreDetails: RotateTileActionDetails{
@@ -28,7 +30,7 @@ err := game.Do(bg.BoardGameAction{
 
 To place a tile on the board do the following action:
 ```go
-err := game.Do(bg.BoardGameAction{
+err := game.Do(&bg.BoardGameAction{
     Team: "TeamA",
     ActionType: "PlaceTile",
     MoreDetails: PlaceTileActionDetails{

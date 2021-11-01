@@ -17,3 +17,12 @@ func mapContainsVal(m map[string]string, item string) bool {
 	}
 	return false
 }
+
+func indexOf(items []string, item string) int {
+	for index, it := range items {
+		if it == item {
+			return index
+		}
+	}
+	return -1
+}

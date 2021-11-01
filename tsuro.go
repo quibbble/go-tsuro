@@ -20,7 +20,7 @@ type Tsuro struct {
 	seed    int64
 }
 
-func NewTsuro(options bg.BoardGameOptions, seed int64) (*Tsuro, error) {
+func NewTsuro(options *bg.BoardGameOptions) (*Tsuro, error) {
 	if len(options.Teams) < minTeams {
 		return nil, &bgerr.Error{
 			Err:    fmt.Errorf("at least %d teams required to create a game of %s", minTeams, key),
@@ -33,13 +33,13 @@ func NewTsuro(options bg.BoardGameOptions, seed int64) (*Tsuro, error) {
 		}
 	}
 	return &Tsuro{
-		state:   newState(options.Teams, rand.New(rand.NewSource(seed))),
+		state:   newState(options.Teams, rand.New(rand.NewSource(options.Seed))),
 		actions: make([]*bg.BoardGameAction, 0),
-		seed:    seed,
+		seed:    options.Seed,
 	}, nil
 }
 
-func (t *Tsuro) Do(action bg.BoardGameAction) error {
+func (t *Tsuro) Do(action *bg.BoardGameAction) error {
 	switch action.ActionType {
 	case ActionRotateTileRight:
 		var details RotateTileActionDetails
@@ -74,7 +74,7 @@ func (t *Tsuro) Do(action bg.BoardGameAction) error {
 		if err := t.state.PlaceTile(action.Team, details.Tile, details.Row, details.Column); err != nil {
 			return err
 		}
-		t.actions = append(t.actions, &action)
+		t.actions = append(t.actions, action)
 	case bg.ActionReset:
 		seed := time.Now().UnixNano()
 		t.state = newState(t.state.teams, rand.New(rand.NewSource(seed)))
@@ -82,9 +82,9 @@ func (t *Tsuro) Do(action bg.BoardGameAction) error {
 		t.seed = seed
 	case bg.ActionUndo:
 		if len(t.actions) > 0 {
-			undo, _ := NewTsuro(bg.BoardGameOptions{Teams: t.state.teams}, t.seed)
+			undo, _ := NewTsuro(&bg.BoardGameOptions{Teams: t.state.teams, Seed: t.seed})
 			for _, a := range t.actions[:len(t.actions)-1] {
-				if err := undo.Do(*a); err != nil {
+				if err := undo.Do(a); err != nil {
 					return err
 				}
 			}
@@ -143,6 +143,20 @@ func (t *Tsuro) GetSnapshot(team ...string) (*bg.BoardGameSnapshot, error) {
 	}, nil
 }
 
-func (t *Tsuro) GetSeed() int64 {
-	return t.seed
+func (t *Tsuro) GetNotation() string {
+	// extra colon is left for MoreOptions which may be utilized in future additions
+	notation := fmt.Sprintf("%d:%d::", len(t.state.teams), t.seed)
+	for _, action := range t.actions {
+		base := fmt.Sprintf("%d,%d", indexOf(t.state.teams, action.Team), notationActionToInt[action.ActionType])
+		switch action.ActionType {
+		case ActionPlaceTile:
+			var details PlaceTileActionDetails
+			_ = mapstructure.Decode(action.MoreDetails, &details)
+			base = fmt.Sprintf("%s,%s;", base, details.encode())
+		default:
+			base = fmt.Sprintf("%s;", base)
+		}
+		notation += base
+	}
+	return notation
 }
