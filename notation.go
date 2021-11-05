@@ -4,31 +4,30 @@ import (
 	"fmt"
 	"github.com/quibbble/go-boardgame/pkg/bgerr"
 	"strconv"
-	"strings"
 )
-
-// Notation - "'number of teams':'seed':'MoreOptions':'team index','action type number','details','details';..."
 
 var (
-	notationActionToInt = map[string]int{ActionPlaceTile: 0}
-	notationIntToAction = map[string]string{"0": ActionPlaceTile}
+	actionToNotation = map[string]string{ActionPlaceTile: "p"}
+	notationToAction = reverseMap(actionToNotation)
 )
 
-func (p *PlaceTileActionDetails) encode() string {
-	return fmt.Sprintf("%d,%d,%d", p.Column, p.Row, indexOf(tiles, p.Tile))
+func (p *PlaceTileActionDetails) encode() []string {
+	return []string{strconv.Itoa(p.Row), strconv.Itoa(p.Column), strconv.Itoa(indexOf(tiles, p.Tile))}
 }
 
-func decodeNotationPlaceTileActionDetails(notation string) (*PlaceTileActionDetails, error) {
-	split := strings.Split(notation, ",")
-	row, err := strconv.Atoi(split[0])
+func decodePlaceTileActionDetails(notation []string) (*PlaceTileActionDetails, error) {
+	if len(notation) != 3 {
+		return nil, loadFailure(fmt.Errorf("invalid place tile notation"))
+	}
+	row, err := strconv.Atoi(notation[0])
 	if err != nil {
 		return nil, loadFailure(err)
 	}
-	column, err := strconv.Atoi(split[1])
+	column, err := strconv.Atoi(notation[1])
 	if err != nil {
 		return nil, loadFailure(err)
 	}
-	tileIndex, err := strconv.Atoi(split[2])
+	tileIndex, err := strconv.Atoi(notation[2])
 	if err != nil {
 		return nil, loadFailure(err)
 	}
