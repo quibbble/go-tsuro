@@ -8,7 +8,6 @@ import (
 	"github.com/quibbble/go-boardgame/pkg/bgn"
 	"math/rand"
 	"strings"
-	"time"
 )
 
 const (
@@ -77,27 +76,18 @@ func (t *Tsuro) Do(action *bg.BoardGameAction) error {
 			return err
 		}
 		t.actions = append(t.actions, action)
-	case bg.ActionReset:
-		seed := time.Now().UnixNano()
-		t.state = newState(t.state.teams, rand.New(rand.NewSource(seed)))
-		t.actions = make([]*bg.BoardGameAction, 0)
-		t.seed = seed
-	case bg.ActionUndo:
-		if len(t.actions) > 0 {
-			undo, _ := NewTsuro(&bg.BoardGameOptions{Teams: t.state.teams, Seed: t.seed})
-			for _, a := range t.actions[:len(t.actions)-1] {
-				if err := undo.Do(a); err != nil {
-					return err
-				}
-			}
-			t.state = undo.state
-			t.actions = undo.actions
-		} else {
+	case bg.ActionSetWinners:
+		var details bg.SetWinnersActionDetails
+		if err := mapstructure.Decode(action.MoreDetails, &details); err != nil {
 			return &bgerr.Error{
-				Err:    fmt.Errorf("no actions to undo"),
-				Status: bgerr.StatusInvalidAction,
+				Err:    err,
+				Status: bgerr.StatusInvalidActionDetails,
 			}
 		}
+		if err := t.state.SetWinners(details.Winners); err != nil {
+			return err
+		}
+		t.actions = append(t.actions, action)
 	default:
 		return &bgerr.Error{
 			Err:    fmt.Errorf("cannot process action type %s", action.ActionType),
@@ -162,6 +152,10 @@ func (t *Tsuro) GetBGN() *bgn.Game {
 			var details PlaceTileActionDetails
 			_ = mapstructure.Decode(action.MoreDetails, &details)
 			bgnAction.Details = details.encode()
+		case bg.ActionSetWinners:
+			var details bg.SetWinnersActionDetails
+			_ = mapstructure.Decode(action.MoreDetails, &details)
+			bgnAction.Details, _ = details.EncodeBGN(t.state.teams)
 		}
 		actions = append(actions, bgnAction)
 	}

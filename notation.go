@@ -2,12 +2,13 @@ package go_tsuro
 
 import (
 	"fmt"
+	bg "github.com/quibbble/go-boardgame"
 	"github.com/quibbble/go-boardgame/pkg/bgerr"
 	"strconv"
 )
 
 var (
-	actionToNotation = map[string]string{ActionPlaceTile: "p"}
+	actionToNotation = map[string]string{ActionPlaceTile: "p", bg.ActionSetWinners: "w"}
 	notationToAction = reverseMap(actionToNotation)
 )
 
@@ -44,6 +45,6 @@ func decodePlaceTileActionDetails(notation []string) (*PlaceTileActionDetails, e
 func loadFailure(err error) error {
 	return &bgerr.Error{
 		Err:    err,
-		Status: bgerr.StatusGameLoadFailure,
+		Status: bgerr.StatusBGNDecodingFailure,
 	}
 }

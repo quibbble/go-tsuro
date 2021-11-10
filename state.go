@@ -158,6 +158,19 @@ func (s *state) PlaceTile(team, tile string, row, column int) error {
 	return nil
 }
 
+func (s *state) SetWinners(winners []string) error {
+	for _, winner := range winners {
+		if !contains(s.teams, winner) {
+			return &bgerr.Error{
+				Err:    fmt.Errorf("winner not in teams"),
+				Status: bgerr.StatusInvalidActionDetails,
+			}
+		}
+	}
+	s.winners = winners
+	return nil
+}
+
 func (s *state) moveTokens() {
 	moved := 0
 	move := map[string]string{"A": "F", "B": "E", "C": "H", "D": "G", "E": "B", "F": "A", "G": "D", "H": "C"}
