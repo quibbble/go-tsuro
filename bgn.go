@@ -12,11 +12,11 @@ var (
 	notationToAction = reverseMap(actionToNotation)
 )
 
-func (p *PlaceTileActionDetails) encode() []string {
+func (p *PlaceTileActionDetails) encodeBGN() []string {
 	return []string{strconv.Itoa(p.Row), strconv.Itoa(p.Column), strconv.Itoa(indexOf(tiles, p.Tile))}
 }
 
-func decodePlaceTileActionDetails(notation []string) (*PlaceTileActionDetails, error) {
+func decodePlaceTileActionDetailsBGN(notation []string) (*PlaceTileActionDetails, error) {
 	if len(notation) != 3 {
 		return nil, loadFailure(fmt.Errorf("invalid place tile notation"))
 	}

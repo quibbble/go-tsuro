@@ -18,8 +18,8 @@ type PlaceTileActionDetails struct {
 	Tile        string
 }
 
-// TsuroSnapshotDetails are the details unique to tsuro
-type TsuroSnapshotDetails struct {
+// TsuroSnapshotData is the game data unique to Tsuro
+type TsuroSnapshotData struct {
 	Board          [][]*tile
 	TilesRemaining int
 	Hands          map[string][]*tile

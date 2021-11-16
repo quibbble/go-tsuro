@@ -52,12 +52,6 @@ func newState(teams []string, random *rand.Rand) *state {
 }
 
 func (s *state) RotateTileRight(team, tile string) error {
-	if len(s.winners) > 0 {
-		return &bgerr.Error{
-			Err:    fmt.Errorf("%s game already completed", key),
-			Status: bgerr.StatusGameOver,
-		}
-	}
 	if !contains(s.teams, team) {
 		return &bgerr.Error{
 			Err:    fmt.Errorf("%s not a valid team", team),
@@ -76,12 +70,6 @@ func (s *state) RotateTileRight(team, tile string) error {
 }
 
 func (s *state) RotateTileLeft(team, tile string) error {
-	if len(s.winners) > 0 {
-		return &bgerr.Error{
-			Err:    fmt.Errorf("%s game already completed", key),
-			Status: bgerr.StatusGameOver,
-		}
-	}
 	if !contains(s.teams, team) {
 		return &bgerr.Error{
 			Err:    fmt.Errorf("%s not a valid team", team),
@@ -100,15 +88,9 @@ func (s *state) RotateTileLeft(team, tile string) error {
 }
 
 func (s *state) PlaceTile(team, tile string, row, column int) error {
-	if len(s.winners) > 0 {
-		return &bgerr.Error{
-			Err:    fmt.Errorf("%s game already completed", key),
-			Status: bgerr.StatusGameOver,
-		}
-	}
 	if team != s.turn {
 		return &bgerr.Error{
-			Err:    fmt.Errorf("currently %s's turn", s.turn),
+			Err:    fmt.Errorf("%s cannot play on %s turn", team, s.turn),
 			Status: bgerr.StatusWrongTurn,
 		}
 	}

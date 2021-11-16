@@ -41,6 +41,12 @@ func NewTsuro(options *bg.BoardGameOptions) (*Tsuro, error) {
 }
 
 func (t *Tsuro) Do(action *bg.BoardGameAction) error {
+	if len(t.state.winners) > 0 {
+		return &bgerr.Error{
+			Err:    fmt.Errorf("game already over"),
+			Status: bgerr.StatusGameOver,
+		}
+	}
 	switch action.ActionType {
 	case ActionRotateTileRight:
 		var details RotateTileActionDetails
@@ -114,7 +120,7 @@ func (t *Tsuro) GetSnapshot(team ...string) (*bg.BoardGameSnapshot, error) {
 			}
 		}
 	}
-	details := TsuroSnapshotDetails{
+	details := TsuroSnapshotData{
 		Board:          t.state.board.board,
 		TilesRemaining: len(t.state.deck.deck),
 		Hands:          hands,
@@ -151,7 +157,7 @@ func (t *Tsuro) GetBGN() *bgn.Game {
 		case ActionPlaceTile:
 			var details PlaceTileActionDetails
 			_ = mapstructure.Decode(action.MoreDetails, &details)
-			bgnAction.Details = details.encode()
+			bgnAction.Details = details.encodeBGN()
 		case bg.ActionSetWinners:
 			var details bg.SetWinnersActionDetails
 			_ = mapstructure.Decode(action.MoreDetails, &details)
