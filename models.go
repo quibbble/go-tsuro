@@ -7,6 +7,11 @@ const (
 	ActionRotateTileLeft  = "RotateRileLeft"
 )
 
+// TsuroMoreOptions are the additional options for creating a game of Tsuro
+type TsuroMoreOptions struct {
+	Seed int64
+}
+
 // RotateTileActionDetails is the action details for rotating a tile in hand
 type RotateTileActionDetails struct {
 	Tile string

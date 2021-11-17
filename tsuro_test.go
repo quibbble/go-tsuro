@@ -15,7 +15,9 @@ const (
 func Test_Tsuro(t *testing.T) {
 	tsuro, err := NewTsuro(&bg.BoardGameOptions{
 		Teams: []string{TeamA, TeamB},
-		Seed:  time.Now().UnixNano(),
+		MoreOptions: TsuroMoreOptions{
+			Seed: time.Now().UnixNano(),
+		},
 	})
 	if err != nil {
 		t.Error(err)

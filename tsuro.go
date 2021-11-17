@@ -18,7 +18,7 @@ const (
 type Tsuro struct {
 	state   *state
 	actions []*bg.BoardGameAction
-	seed    int64
+	options *TsuroMoreOptions
 }
 
 func NewTsuro(options *bg.BoardGameOptions) (*Tsuro, error) {
@@ -33,10 +33,17 @@ func NewTsuro(options *bg.BoardGameOptions) (*Tsuro, error) {
 			Status: bgerr.StatusTooManyTeams,
 		}
 	}
+	var details TsuroMoreOptions
+	if err := mapstructure.Decode(options.MoreOptions, &details); err != nil {
+		return nil, &bgerr.Error{
+			Err:    err,
+			Status: bgerr.StatusInvalidOption,
+		}
+	}
 	return &Tsuro{
-		state:   newState(options.Teams, rand.New(rand.NewSource(options.Seed))),
+		state:   newState(options.Teams, rand.New(rand.NewSource(details.Seed))),
 		actions: make([]*bg.BoardGameAction, 0),
-		seed:    options.Seed,
+		options: &details,
 	}, nil
 }
 
@@ -145,7 +152,7 @@ func (t *Tsuro) GetBGN() *bgn.Game {
 	tags := map[string]string{
 		"Game":  key,
 		"Teams": strings.Join(t.state.teams, ", "),
-		"Seed":  fmt.Sprintf("%d", t.seed),
+		"Seed":  fmt.Sprintf("%d", t.options.Seed),
 	}
 	actions := make([]bgn.Action, 0)
 	for _, action := range t.actions {

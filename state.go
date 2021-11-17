@@ -38,7 +38,7 @@ func newState(teams []string, random *rand.Rand) *state {
 		alive[team] = true
 	}
 	return &state{
-		turn:    teams[rand.Intn(len(teams))],
+		turn:    teams[0],
 		teams:   teams,
 		winners: make([]string, 0),
 		board:   newBoard(),

@@ -38,8 +38,8 @@ func (b *Builder) Load(game *bgn.Game) (bg.BoardGameWithBGN, error) {
 		return nil, loadFailure(err)
 	}
 	g, err := b.CreateWithBGN(&bg.BoardGameOptions{
-		Teams: teams,
-		Seed:  int64(seed),
+		Teams:       teams,
+		MoreOptions: TsuroMoreOptions{Seed: int64(seed)},
 	})
 	if err != nil {
 		return nil, err
