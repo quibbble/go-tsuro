@@ -11,9 +11,7 @@ func newHand() *hand {
 }
 
 func (h *hand) Add(tiles ...*tile) {
-	for _, tile := range tiles {
-		h.hand = append(h.hand, tile)
-	}
+	h.hand = append(h.hand, tiles...)
 }
 
 func (h *hand) Remove(tile *tile) error {

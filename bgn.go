@@ -2,9 +2,10 @@ package go_tsuro
 
 import (
 	"fmt"
+	"strconv"
+
 	bg "github.com/quibbble/go-boardgame"
 	"github.com/quibbble/go-boardgame/pkg/bgerr"
-	"strconv"
 )
 
 var (

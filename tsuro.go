@@ -2,12 +2,13 @@ package go_tsuro
 
 import (
 	"fmt"
+	"math/rand"
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 	bg "github.com/quibbble/go-boardgame"
 	"github.com/quibbble/go-boardgame/pkg/bgerr"
 	"github.com/quibbble/go-boardgame/pkg/bgn"
-	"math/rand"
-	"strings"
 )
 
 const (
@@ -145,6 +146,7 @@ func (t *Tsuro) GetSnapshot(team ...string) (*bg.BoardGameSnapshot, error) {
 		MoreData: details,
 		Targets:  targets,
 		Actions:  t.actions,
+		Message:  t.state.message(),
 	}, nil
 }
 

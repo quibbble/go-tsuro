@@ -34,9 +34,7 @@ func (d *deck) Remove(tile *tile) error {
 }
 
 func (d *deck) Add(tiles ...*tile) {
-	for _, tile := range tiles {
-		d.deck = append(d.deck, tile)
-	}
+	d.deck = append(d.deck, tiles...)
 	d.Shuffle()
 }
 

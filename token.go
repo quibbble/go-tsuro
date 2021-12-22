@@ -40,11 +40,7 @@ func randomToken(random *rand.Rand) *token {
 		row = side
 		col = 0
 	}
-	return &token{
-		Row:   row,
-		Col:   col,
-		Notch: notch,
-	}
+	return newToken(row, col, notch)
 }
 
 func (t *token) equals(t2 *token) bool {

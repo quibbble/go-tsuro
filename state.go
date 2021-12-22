@@ -2,10 +2,11 @@ package go_tsuro
 
 import (
 	"fmt"
-	bg "github.com/quibbble/go-boardgame"
-	"github.com/quibbble/go-boardgame/pkg/bgerr"
 	"math/rand"
 	"strings"
+
+	bg "github.com/quibbble/go-boardgame"
+	"github.com/quibbble/go-boardgame/pkg/bgerr"
 )
 
 type state struct {
@@ -395,6 +396,17 @@ func (s *state) targets(team ...string) []*bg.BoardGameAction {
 		}
 	}
 	return targets
+}
+
+func (s *state) message() string {
+	message := fmt.Sprintf("%s must place a tile", s.turn)
+	if len(s.winners) > 0 {
+		message = fmt.Sprintf("%s tie", strings.Join(s.winners, ", "))
+		if len(s.winners) == 1 {
+			message = fmt.Sprintf("%s wins", s.winners[0])
+		}
+	}
+	return message
 }
 
 func uniqueRandomToken(tokens map[string]*token, random *rand.Rand) *token {
