@@ -41,8 +41,23 @@ func NewTsuro(options *bg.BoardGameOptions) (*Tsuro, error) {
 			Status: bgerr.StatusInvalidOption,
 		}
 	}
+	if details.Variant == "" {
+		details.Variant = VariantClassic
+	} else if !contains(Variants, details.Variant) {
+		return nil, &bgerr.Error{
+			Err:    fmt.Errorf("invalid Tsuro variant"),
+			Status: bgerr.StatusInvalidOption,
+		}
+	}
+	state, err := newState(options.Teams, rand.New(rand.NewSource(details.Seed)), details.Variant)
+	if err != nil {
+		return nil, &bgerr.Error{
+			Err:    err,
+			Status: bgerr.StatusInvalidOption,
+		}
+	}
 	return &Tsuro{
-		state:   newState(options.Teams, rand.New(rand.NewSource(details.Seed))),
+		state:   state,
 		actions: make([]*bg.BoardGameAction, 0),
 		options: &details,
 	}, nil
@@ -134,6 +149,8 @@ func (t *Tsuro) GetSnapshot(team ...string) (*bg.BoardGameSnapshot, error) {
 		Hands:          hands,
 		Tokens:         t.state.tokens,
 		Dragon:         t.state.dragon,
+		Variant:        t.state.variant,
+		Points:         t.state.points,
 	}
 	var targets []*bg.BoardGameAction
 	if len(t.state.winners) == 0 {

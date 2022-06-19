@@ -34,3 +34,17 @@ func reverseMap(m map[string]string) map[string]string {
 	}
 	return n
 }
+
+func max(m map[string]int) []string {
+	currMax := 0
+	currKeys := []string{}
+	for k, v := range m {
+		if v > currMax {
+			currMax = v
+			currKeys = []string{k}
+		} else if v == currMax {
+			currKeys = append(currKeys, k)
+		}
+	}
+	return currKeys
+}

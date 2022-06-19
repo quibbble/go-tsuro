@@ -20,23 +20,56 @@ type state struct {
 	dragon  string
 	active  map[string]bool // teams that have placed and still alive
 	alive   map[string]bool // teams that are alive
+	variant string
+	points  map[string]int
 }
 
-func newState(teams []string, random *rand.Rand) *state {
+func newState(teams []string, random *rand.Rand, variant string) (*state, error) {
 	hands := make(map[string]*hand)
 	tokens := make(map[string]*token)
 	alive := make(map[string]bool)
 	deck := newDeck(random)
-	for _, team := range teams {
+	var points map[string]int
+
+	switch variant {
+	case VariantClassic, VariantSolo:
+		for _, team := range teams {
+			hand := newHand()
+			for i := 0; i < 3; i++ {
+				tile, _ := deck.Draw()
+				hand.Add(tile)
+			}
+			hands[team] = hand
+			token := uniqueRandomToken(tokens, random)
+			tokens[team] = token
+			alive[team] = true
+		}
+	case VariantLongestPath, VariantMostLoops:
+		points = make(map[string]int)
+		for _, team := range teams {
+			hand := newHand()
+			for i := 0; i < 3; i++ {
+				tile, _ := deck.Draw()
+				hand.Add(tile)
+			}
+			hands[team] = hand
+			token := uniqueRandomToken(tokens, random)
+			tokens[team] = token
+			alive[team] = true
+			points[team] = 0
+		}
+	case VariantOpenTiles:
 		hand := newHand()
 		for i := 0; i < 3; i++ {
 			tile, _ := deck.Draw()
 			hand.Add(tile)
 		}
-		hands[team] = hand
-		token := uniqueRandomToken(tokens, random)
-		tokens[team] = token
-		alive[team] = true
+		for _, team := range teams {
+			hands[team] = hand
+			token := uniqueRandomToken(tokens, random)
+			tokens[team] = token
+			alive[team] = true
+		}
 	}
 	return &state{
 		turn:    teams[0],
@@ -49,10 +82,18 @@ func newState(teams []string, random *rand.Rand) *state {
 		dragon:  "",
 		active:  make(map[string]bool),
 		alive:   alive,
-	}
+		variant: variant,
+		points:  points,
+	}, nil
 }
 
 func (s *state) RotateTileRight(team, tile string) error {
+	if s.variant == VariantOpenTiles && team != s.turn {
+		return &bgerr.Error{
+			Err:    fmt.Errorf("%s cannot rotate tile on %s turn", team, s.turn),
+			Status: bgerr.StatusWrongTurn,
+		}
+	}
 	if !contains(s.teams, team) {
 		return &bgerr.Error{
 			Err:    fmt.Errorf("%s not a valid team", team),
@@ -71,6 +112,12 @@ func (s *state) RotateTileRight(team, tile string) error {
 }
 
 func (s *state) RotateTileLeft(team, tile string) error {
+	if s.variant == VariantOpenTiles && team != s.turn {
+		return &bgerr.Error{
+			Err:    fmt.Errorf("%s cannot rotate tile on %s turn", team, s.turn),
+			Status: bgerr.StatusWrongTurn,
+		}
+	}
 	if !contains(s.teams, team) {
 		return &bgerr.Error{
 			Err:    fmt.Errorf("%s not a valid team", team),
@@ -135,6 +182,7 @@ func (s *state) PlaceTile(team, tile string, row, column int) error {
 		s.active[s.turn] = true
 	}
 	s.moveTokens()
+	s.score()
 	s.updateAlive()
 	s.handleDraws()
 	s.nextTurn()
@@ -214,6 +262,63 @@ func (s *state) collided(tokens map[string]*token, team string, token *token) bo
 	return false
 }
 
+func (s *state) score() {
+	switch s.variant {
+	case VariantLongestPath:
+		points := make(map[string]int)
+		for _, team := range s.teams {
+			points[team] = 0
+		}
+		for _, row := range s.board.board {
+			for _, tile := range row {
+				if tile != nil {
+					for _, team := range tile.Paths {
+						points[team]++
+					}
+				}
+			}
+		}
+		s.points = points
+	case VariantMostLoops:
+		points := make(map[string]int)
+		for _, team := range s.teams {
+			points[team] = 0
+		}
+		for _, row := range s.board.board {
+			for _, tile := range row {
+				if tile != nil {
+					// calculates the number of times path of the same team cross on a tile
+					// this is equivalent to the number of loops
+					pathScores := make(map[string]int)
+					for path1, team1 := range tile.Paths {
+						for path2, team2 := range tile.Paths {
+							if path1 == path2 {
+								continue
+							}
+							// check if same team and paths cross
+							if team1 == team2 && contains(crossing[path1], path2) {
+								pathScores[path1]++
+							}
+						}
+					}
+					// find the max number of crossings for each team
+					tilePoints := make(map[string]int)
+					for path, score := range pathScores {
+						team := tile.Paths[path]
+						if tilePoints[team] < score {
+							tilePoints[team] = score
+						}
+					}
+					for team, score := range tilePoints {
+						points[team] += score
+					}
+				}
+			}
+		}
+		s.points = points
+	}
+}
+
 func (s *state) updateAlive() {
 	if len(s.winners) > 0 {
 		return
@@ -247,15 +352,29 @@ func (s *state) updateAlive() {
 			stillAlive = append(stillAlive, team)
 		}
 	}
-	if len(stillAlive) == 0 {
-		// no more alive so initial alive all win
-		s.winners = initialAlive
-	} else if len(stillAlive) == 1 {
-		// one alive so they win
-		s.winners = stillAlive
-	} else if s.board.getTileCount() == len(tiles) {
-		// all tiles have been placed remaining alive are winners
-		s.winners = stillAlive
+	switch s.variant {
+	case VariantClassic, VariantOpenTiles:
+		if len(stillAlive) == 0 { // no more alive so initial alive all win
+			s.winners = initialAlive
+		} else if len(stillAlive) == 1 { // one alive so they win
+			s.winners = stillAlive
+		} else if s.board.getTileCount() == len(tiles) { // all tiles have been placed remaining alive are winners
+			s.winners = stillAlive
+		}
+	case VariantLongestPath, VariantMostLoops:
+		if len(stillAlive) == 0 { // no more alive
+			s.winners = max(s.points)
+		} else if s.board.getTileCount() == len(tiles) { // all tiles have been placed
+			s.winners = max(s.points)
+		}
+	case VariantSolo:
+		if s.board.getTileCount() == len(tiles) { // win if all tokens are still on board and all tiles have been placed
+			if len(stillAlive) == len(s.teams) {
+				s.winners = []string{"true"}
+			} else {
+				s.winners = []string{"false"}
+			}
+		}
 	}
 }
 
@@ -400,10 +519,27 @@ func (s *state) targets(team ...string) []*bg.BoardGameAction {
 
 func (s *state) message() string {
 	message := fmt.Sprintf("%s must place a tile", s.turn)
-	if len(s.winners) > 0 {
-		message = fmt.Sprintf("%s tie", strings.Join(s.winners, ", "))
-		if len(s.winners) == 1 {
-			message = fmt.Sprintf("%s wins", s.winners[0])
+	switch s.variant {
+	case VariantClassic, VariantOpenTiles, VariantLongestPath, VariantMostLoops:
+		if len(s.winners) > 0 {
+			message = fmt.Sprintf("%s tie", strings.Join(s.winners, ", "))
+			if len(s.winners) == 1 {
+				message = fmt.Sprintf("%s wins", s.winners[0])
+			}
+		}
+	case VariantSolo:
+		if len(s.winners) > 0 {
+			if s.winners[0] == "true" {
+				message = "you saved all the tokens"
+			} else {
+				saved := 0
+				for _, team := range s.teams {
+					if s.alive[team] {
+						saved++
+					}
+				}
+				message = fmt.Sprintf("you saved %d tokens", saved)
+			}
 		}
 	}
 	return message
