@@ -14,7 +14,7 @@ builder := Builder{}
 game, err := builder.Create(&bg.BoardGameOptions{
     Teams: []string{"TeamA", "TeamB"}, // must contain at least 2 and at most 8 teams
     MoreOptions: TsuroMoreOptions{
-        Seed: 123, // OPTIONAL - seed used to generate deterministic randomness
+        Seed: 123, // OPTIONAL - seed used to generate deterministic randomness which defaults to 0
         Variant: "Classic" // OPTIONAL - variants that change the game rules i.e. Classic (default), LongestPath, MostCrossings, OpenTiles, or Solo
     }
 })
