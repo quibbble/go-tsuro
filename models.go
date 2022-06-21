@@ -9,14 +9,14 @@ const (
 
 // Tsuro Variants
 const (
-	VariantClassic     = "Classic"     // normal Tsuro
-	VariantLongestPath = "LongestPath" // player longest path wins
-	VariantMostLoops   = "MostLoops"   // player with most loops wins
-	VariantOpenTiles   = "OpenTiles"   // tiles are shared globally
-	VariantSolo        = "Solo"        // place tiles while keeping all tokens on the board
+	VariantClassic       = "Classic"       // normal Tsuro
+	VariantLongestPath   = "LongestPath"   // player with the longest path wins
+	VariantMostCrossings = "MostCrossings" // player whose path crosses itself the most wins
+	VariantOpenTiles     = "OpenTiles"     // tiles are shared globally
+	VariantSolo          = "Solo"          // place tiles while keeping all tokens on the board
 )
 
-var Variants = []string{VariantClassic, VariantLongestPath, VariantMostLoops, VariantOpenTiles, VariantSolo}
+var Variants = []string{VariantClassic, VariantLongestPath, VariantMostCrossings, VariantOpenTiles, VariantSolo}
 
 // TsuroMoreOptions are the additional options for creating a game of Tsuro
 type TsuroMoreOptions struct {

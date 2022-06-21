@@ -44,7 +44,7 @@ func newState(teams []string, random *rand.Rand, variant string) (*state, error)
 			tokens[team] = token
 			alive[team] = true
 		}
-	case VariantLongestPath, VariantMostLoops:
+	case VariantLongestPath, VariantMostCrossings:
 		points = make(map[string]int)
 		for _, team := range teams {
 			hand := newHand()
@@ -279,7 +279,7 @@ func (s *state) score() {
 			}
 		}
 		s.points = points
-	case VariantMostLoops:
+	case VariantMostCrossings:
 		points := make(map[string]int)
 		for _, team := range s.teams {
 			points[team] = 0
@@ -288,7 +288,6 @@ func (s *state) score() {
 			for _, tile := range row {
 				if tile != nil {
 					// calculates the number of times path of the same team cross on a tile
-					// this is equivalent to the number of loops
 					pathScores := make(map[string]int)
 					for path1, team1 := range tile.Paths {
 						for path2, team2 := range tile.Paths {
@@ -361,11 +360,14 @@ func (s *state) updateAlive() {
 		} else if s.board.getTileCount() == len(tiles) { // all tiles have been placed remaining alive are winners
 			s.winners = stillAlive
 		}
-	case VariantLongestPath, VariantMostLoops:
+	case VariantLongestPath, VariantMostCrossings:
+		max := max(s.points)
 		if len(stillAlive) == 0 { // no more alive
-			s.winners = max(s.points)
+			s.winners = max
 		} else if s.board.getTileCount() == len(tiles) { // all tiles have been placed
-			s.winners = max(s.points)
+			s.winners = max
+		} else if len(stillAlive) == 1 && len(max) == 1 && max[0] == stillAlive[0] { // last remaining has the most points to wins
+			s.winners = max
 		}
 	case VariantSolo:
 		if s.board.getTileCount() == len(tiles) { // win if all tokens are still on board and all tiles have been placed
@@ -520,7 +522,7 @@ func (s *state) targets(team ...string) []*bg.BoardGameAction {
 func (s *state) message() string {
 	message := fmt.Sprintf("%s must place a tile", s.turn)
 	switch s.variant {
-	case VariantClassic, VariantOpenTiles, VariantLongestPath, VariantMostLoops:
+	case VariantClassic, VariantOpenTiles, VariantLongestPath, VariantMostCrossings:
 		if len(s.winners) > 0 {
 			message = fmt.Sprintf("%s tie", strings.Join(s.winners, ", "))
 			if len(s.winners) == 1 {
