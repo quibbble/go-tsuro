@@ -13,7 +13,7 @@ const (
 	TeamB = "TeamB"
 )
 
-func Test_Tsuro(t *testing.T) {
+func Test_TsuroSmoke(t *testing.T) {
 	tsuro, err := NewTsuro(&bg.BoardGameOptions{
 		Teams: []string{TeamA, TeamB},
 		MoreOptions: TsuroMoreOptions{
@@ -25,16 +25,20 @@ func Test_Tsuro(t *testing.T) {
 		t.FailNow()
 	}
 
-	tile := "ABCDEFG"
-	rotated := "CDEFGHA"
-	tsuro.state.hands[TeamA].hand[0] = newTile(tile)
+	edges := "ABCDEFGH"
+	rotated := "CDEFGHAB"
+	tile, err := newTile(edges)
+	if err != nil {
+		t.FailNow()
+	}
+	tsuro.state.hands[TeamA].hand[0] = tile
 
 	// rotate first tile in TeamA hand
 	err = tsuro.Do(&bg.BoardGameAction{
 		Team:       TeamA,
 		ActionType: ActionRotateTileRight,
 		MoreDetails: RotateTileActionDetails{
-			Tile: tile,
+			Tile: edges,
 		},
 	})
 	if err != nil {

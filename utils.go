@@ -48,3 +48,14 @@ func max(m map[string]int) []string {
 	}
 	return currKeys
 }
+
+func duplicates(list []string) bool {
+	for idx, v1 := range list {
+		for _, v2 := range list[idx+1:] {
+			if v1 == v2 {
+				return true
+			}
+		}
+	}
+	return false
+}

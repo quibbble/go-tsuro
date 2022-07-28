@@ -1,5 +1,7 @@
 package go_tsuro
 
+import "fmt"
+
 /*
    tile representation
 
@@ -15,11 +17,18 @@ type tile struct {
 	Paths map[string]string // map from path to team defining section team path
 }
 
-func newTile(edges string) *tile {
-	return &tile{
+func newTile(edges string) (*tile, error) {
+	t := &tile{
 		Edges: edges,
 		Paths: make(map[string]string),
 	}
+	for i := 0; i < 4; i++ {
+		if contains(tiles, t.Edges) {
+			return t, nil
+		}
+		t.RotateRight()
+	}
+	return nil, fmt.Errorf("edges %s are not a valid tile configuration", edges)
 }
 
 func (t *tile) GetDestination(start string) string {
@@ -52,7 +61,7 @@ func (t *tile) RotateLeft() {
 }
 
 func (t *tile) equals(t2 *tile) bool {
-	copied := newTile(t.Edges)
+	copied, _ := newTile(t.Edges)
 	for i := 0; i < 4; i++ {
 		if copied.Edges == t2.Edges {
 			return true

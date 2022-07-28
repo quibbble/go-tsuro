@@ -10,33 +10,39 @@ import (
 )
 
 type state struct {
-	turn    string
-	teams   []string
-	winners []string
-	board   *board
-	deck    *deck
-	tokens  map[string]*token
-	hands   map[string]*hand
-	dragon  string
-	active  map[string]bool // teams that have placed and still alive
-	alive   map[string]bool // teams that are alive
-	variant string
-	points  map[string]int
+	turn            string
+	teams           []string
+	winners         []string
+	board           *board
+	deck            *deck
+	tokens          map[string]*token
+	hands           map[string]*hand
+	dragon          string
+	playedFirstTurn map[string]bool // teams that have placed and still alive
+	alive           map[string]bool // teams that are alive
+	variant         string
+	points          map[string]int
 }
 
 func newState(teams []string, random *rand.Rand, variant string) (*state, error) {
+	if random == nil {
+		return nil, fmt.Errorf("random seed is null")
+	}
 	hands := make(map[string]*hand)
 	tokens := make(map[string]*token)
 	alive := make(map[string]bool)
 	deck := newDeck(random)
-	var points map[string]int
+	points := make(map[string]int)
 
 	switch variant {
 	case VariantClassic, VariantSolo:
 		for _, team := range teams {
 			hand := newHand()
 			for i := 0; i < 3; i++ {
-				tile, _ := deck.Draw()
+				tile, err := deck.Draw()
+				if err != nil {
+					return nil, err
+				}
 				hand.Add(tile)
 			}
 			hands[team] = hand
@@ -45,11 +51,13 @@ func newState(teams []string, random *rand.Rand, variant string) (*state, error)
 			alive[team] = true
 		}
 	case VariantLongestPath, VariantMostCrossings:
-		points = make(map[string]int)
 		for _, team := range teams {
 			hand := newHand()
 			for i := 0; i < 3; i++ {
-				tile, _ := deck.Draw()
+				tile, err := deck.Draw()
+				if err != nil {
+					return nil, err
+				}
 				hand.Add(tile)
 			}
 			hands[team] = hand
@@ -61,7 +69,10 @@ func newState(teams []string, random *rand.Rand, variant string) (*state, error)
 	case VariantOpenTiles:
 		hand := newHand()
 		for i := 0; i < 3; i++ {
-			tile, _ := deck.Draw()
+			tile, err := deck.Draw()
+			if err != nil {
+				return nil, err
+			}
 			hand.Add(tile)
 		}
 		for _, team := range teams {
@@ -70,20 +81,25 @@ func newState(teams []string, random *rand.Rand, variant string) (*state, error)
 			tokens[team] = token
 			alive[team] = true
 		}
+	default:
+		return nil, fmt.Errorf("invalid variant %s", variant)
+	}
+	if len(teams) != len(tokens) {
+		return nil, fmt.Errorf("failed to build new state likely due to duplicate teams")
 	}
 	return &state{
-		turn:    teams[0],
-		teams:   teams,
-		winners: make([]string, 0),
-		board:   newBoard(),
-		deck:    deck,
-		tokens:  tokens,
-		hands:   hands,
-		dragon:  "",
-		active:  make(map[string]bool),
-		alive:   alive,
-		variant: variant,
-		points:  points,
+		turn:            teams[0],
+		teams:           teams,
+		winners:         make([]string, 0),
+		board:           newBoard(),
+		deck:            deck,
+		tokens:          tokens,
+		hands:           hands,
+		dragon:          "",
+		playedFirstTurn: make(map[string]bool),
+		alive:           alive,
+		variant:         variant,
+		points:          points,
 	}, nil
 }
 
@@ -100,7 +116,13 @@ func (s *state) RotateTileRight(team, tile string) error {
 			Status: bgerr.StatusUnknownTeam,
 		}
 	}
-	t := newTile(tile)
+	t, err := newTile(tile)
+	if err != nil {
+		return &bgerr.Error{
+			Err:    err,
+			Status: bgerr.StatusInvalidActionDetails,
+		}
+	}
 	if !t.in(s.hands[team].hand) {
 		return &bgerr.Error{
 			Err:    fmt.Errorf("%s's hand does not contain %s", team, tile),
@@ -124,7 +146,13 @@ func (s *state) RotateTileLeft(team, tile string) error {
 			Status: bgerr.StatusUnknownTeam,
 		}
 	}
-	t := newTile(tile)
+	t, err := newTile(tile)
+	if err != nil {
+		return &bgerr.Error{
+			Err:    err,
+			Status: bgerr.StatusInvalidActionDetails,
+		}
+	}
 	if !t.in(s.hands[team].hand) {
 		return &bgerr.Error{
 			Err:    fmt.Errorf("%s's hand does not contain %s", team, tile),
@@ -142,12 +170,12 @@ func (s *state) PlaceTile(team, tile string, row, column int) error {
 			Status: bgerr.StatusWrongTurn,
 		}
 	}
-	if !s.active[s.turn] && (s.tokens[team].Row != row || s.tokens[team].Col != column) {
+	if !s.playedFirstTurn[s.turn] && (s.tokens[team].Row != row || s.tokens[team].Col != column) {
 		return &bgerr.Error{
 			Err:    fmt.Errorf("%s cannot place in row %d column %d", team, row, column),
 			Status: bgerr.StatusInvalidAction,
 		}
-	} else if s.active[s.turn] {
+	} else if s.playedFirstTurn[s.turn] {
 		adj, err := s.tokens[team].getAdjacent()
 		if err != nil {
 			return err
@@ -159,7 +187,13 @@ func (s *state) PlaceTile(team, tile string, row, column int) error {
 			}
 		}
 	}
-	t := newTile(tile)
+	t, err := newTile(tile)
+	if err != nil {
+		return &bgerr.Error{
+			Err:    err,
+			Status: bgerr.StatusInvalidActionDetails,
+		}
+	}
 	if !t.in(s.hands[team].hand) {
 		return &bgerr.Error{
 			Err:    fmt.Errorf("%s's hand does not contain %s", team, tile),
@@ -178,11 +212,13 @@ func (s *state) PlaceTile(team, tile string, row, column int) error {
 			Status: bgerr.StatusInvalidAction,
 		}
 	}
-	if !s.active[s.turn] {
-		s.active[s.turn] = true
+	if !s.playedFirstTurn[s.turn] {
+		s.playedFirstTurn[s.turn] = true
 	}
 	s.moveTokens()
-	s.score()
+	if s.variant == VariantLongestPath || s.variant == VariantMostCrossings {
+		s.score()
+	}
 	s.updateAlive()
 	s.handleDraws()
 	s.nextTurn()
@@ -206,7 +242,7 @@ func (s *state) moveTokens() {
 	moved := 0
 	move := map[string]string{"A": "F", "B": "E", "C": "H", "D": "G", "E": "B", "F": "A", "G": "D", "H": "C"}
 	for team, token := range s.tokens {
-		if s.active[team] {
+		if s.playedFirstTurn[team] {
 			t := s.board.board[token.Row][token.Col]
 			if !mapContainsVal(t.Paths, team) {
 				// first placement so move through the just placed tile
@@ -331,7 +367,7 @@ func (s *state) updateAlive() {
 	}
 	// update who is still alive
 	for team, token := range s.tokens {
-		if s.active[team] {
+		if s.playedFirstTurn[team] {
 			if (token.Row == 0 && strings.Contains("AB", token.Notch)) ||
 				(token.Row == rows-1 && strings.Contains("EF", token.Notch)) ||
 				(token.Col == 0 && strings.Contains("GH", token.Notch)) ||
@@ -371,11 +407,7 @@ func (s *state) updateAlive() {
 		}
 	case VariantSolo:
 		if s.board.getTileCount() == len(tiles) { // win if all tokens are still on board and all tiles have been placed
-			if len(stillAlive) == len(s.teams) {
-				s.winners = []string{"true"}
-			} else {
-				s.winners = []string{"false"}
-			}
+			s.winners = stillAlive
 		}
 	}
 }
@@ -429,7 +461,7 @@ func (s *state) getNextTurn(turn string) string {
 
 func (s *state) setLost(team string) {
 	s.alive[team] = false
-	s.active[team] = false
+	s.playedFirstTurn[team] = false
 	s.deck.Add(s.hands[team].hand...)
 	s.hands[team].Clear()
 	if s.aliveCount() <= 0 {
@@ -456,6 +488,9 @@ func (s *state) targets(team ...string) []*bg.BoardGameAction {
 	// rotate tile actions
 	if len(team) == 0 {
 		for _, t := range s.teams {
+			if s.variant == VariantOpenTiles && t != s.turn {
+				continue
+			}
 			for _, tile := range s.hands[t].hand {
 				targets = append(targets, &bg.BoardGameAction{
 					Team:       s.turn,
@@ -473,20 +508,22 @@ func (s *state) targets(team ...string) []*bg.BoardGameAction {
 			}
 		}
 	} else if len(team) == 1 {
-		for _, tile := range s.hands[team[0]].hand {
-			targets = append(targets, &bg.BoardGameAction{
-				Team:       s.turn,
-				ActionType: ActionRotateTileLeft,
-				MoreDetails: RotateTileActionDetails{
-					Tile: tile.Edges,
-				},
-			}, &bg.BoardGameAction{
-				Team:       s.turn,
-				ActionType: ActionRotateTileRight,
-				MoreDetails: RotateTileActionDetails{
-					Tile: tile.Edges,
-				},
-			})
+		if (s.variant == VariantOpenTiles && team[0] == s.turn) || s.variant != VariantOpenTiles {
+			for _, tile := range s.hands[team[0]].hand {
+				targets = append(targets, &bg.BoardGameAction{
+					Team:       s.turn,
+					ActionType: ActionRotateTileLeft,
+					MoreDetails: RotateTileActionDetails{
+						Tile: tile.Edges,
+					},
+				}, &bg.BoardGameAction{
+					Team:       s.turn,
+					ActionType: ActionRotateTileRight,
+					MoreDetails: RotateTileActionDetails{
+						Tile: tile.Edges,
+					},
+				})
+			}
 		}
 	}
 	// place tile actions
@@ -521,26 +558,18 @@ func (s *state) targets(team ...string) []*bg.BoardGameAction {
 
 func (s *state) message() string {
 	message := fmt.Sprintf("%s must place a tile", s.turn)
-	switch s.variant {
-	case VariantClassic, VariantOpenTiles, VariantLongestPath, VariantMostCrossings:
-		if len(s.winners) > 0 {
+	if len(s.winners) > 0 {
+		switch s.variant {
+		case VariantClassic, VariantOpenTiles, VariantLongestPath, VariantMostCrossings:
 			message = fmt.Sprintf("%s tie", strings.Join(s.winners, ", "))
 			if len(s.winners) == 1 {
 				message = fmt.Sprintf("%s wins", s.winners[0])
 			}
-		}
-	case VariantSolo:
-		if len(s.winners) > 0 {
-			if s.winners[0] == "true" {
+		case VariantSolo:
+			if len(s.winners) == maxTeams {
 				message = "you saved all the tokens"
 			} else {
-				saved := 0
-				for _, team := range s.teams {
-					if s.alive[team] {
-						saved++
-					}
-				}
-				message = fmt.Sprintf("you saved %d tokens", saved)
+				message = fmt.Sprintf("you saved %d tokens", len(s.winners))
 			}
 		}
 	}

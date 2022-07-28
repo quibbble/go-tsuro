@@ -2,9 +2,9 @@
 
 Go-tsuro is a [Go](https://golang.org) implementation of the board game [Tsuro](https://boardgamegeek.com/boardgame/16992/tsuro). Please note that this repo only includes game logic and a basic API to interact with the game but does NOT include any form of GUI.
 
-Check out [quibbble.com](https://quibbble.com/paths) if you wish to view and play a live version of this game which utilizes this project along with a separate custom UI.
+Check out [quibbble.com](https://tsuro.quibbble.com) if you wish to view and play a live version of this game which utilizes this project along with a separate custom UI.
 
-[![Quibbble Paths](https://i.imgur.com/xdtMvHf.png)](https://quibbble.com/paths)
+[![Quibbble Tsuro](https://i.imgur.com/xdtMvHf.png)](https://tsuro.quibbble.com)
 
 ## Usage
 

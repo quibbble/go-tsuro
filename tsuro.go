@@ -33,6 +33,11 @@ func NewTsuro(options *bg.BoardGameOptions) (*Tsuro, error) {
 			Err:    fmt.Errorf("at most %d teams allowed to create a game of %s", maxTeams, key),
 			Status: bgerr.StatusTooManyTeams,
 		}
+	} else if duplicates(options.Teams) {
+		return nil, &bgerr.Error{
+			Err:    fmt.Errorf("duplicate teams found"),
+			Status: bgerr.StatusInvalidOption,
+		}
 	}
 	var details TsuroMoreOptions
 	if err := mapstructure.Decode(options.MoreOptions, &details); err != nil {
@@ -143,6 +148,10 @@ func (t *Tsuro) GetSnapshot(team ...string) (*bg.BoardGameSnapshot, error) {
 			}
 		}
 	}
+	var points map[string]int
+	if t.state.variant == VariantLongestPath || t.state.variant == VariantMostCrossings {
+		points = t.state.points
+	}
 	details := TsuroSnapshotData{
 		Board:          t.state.board.board,
 		TilesRemaining: len(t.state.deck.deck),
@@ -150,7 +159,7 @@ func (t *Tsuro) GetSnapshot(team ...string) (*bg.BoardGameSnapshot, error) {
 		Tokens:         t.state.tokens,
 		Dragon:         t.state.dragon,
 		Variant:        t.state.variant,
-		Points:         t.state.points,
+		Points:         points,
 	}
 	var targets []*bg.BoardGameAction
 	if len(t.state.winners) == 0 {

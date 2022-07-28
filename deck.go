@@ -13,7 +13,8 @@ type deck struct {
 func newDeck(random *rand.Rand) *deck {
 	d := make([]*tile, 0)
 	for _, edges := range tiles {
-		d = append(d, newTile(edges))
+		t, _ := newTile(edges)
+		d = append(d, t)
 	}
 	result := &deck{
 		deck:   d,
