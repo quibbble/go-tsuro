@@ -24,7 +24,10 @@ func newTile(edges string) (*tile, error) {
 	}
 	for i := 0; i < 4; i++ {
 		if contains(tiles, t.Edges) {
-			return t, nil
+			return &tile{
+				Edges: edges,
+				Paths: make(map[string]string),
+			}, nil
 		}
 		t.RotateRight()
 	}
