@@ -406,7 +406,9 @@ func (s *state) updateAlive() {
 			s.winners = max
 		}
 	case VariantSolo:
-		if s.board.getTileCount() == len(tiles) { // win if all tokens are still on board and all tiles have been placed
+		if len(stillAlive) == 0 {
+			s.winners = []string{"FAIL"}
+		} else if s.board.getTileCount() == len(tiles) { // win if all tokens are still on board and all tiles have been placed
 			s.winners = stillAlive
 		}
 	}
@@ -566,10 +568,12 @@ func (s *state) message() string {
 				message = fmt.Sprintf("%s wins", s.winners[0])
 			}
 		case VariantSolo:
-			if len(s.winners) == maxTeams {
-				message = "you saved all the tokens"
-			} else {
+			if len(s.winners) == 1 && s.winners[0] == "FAIL" {
+				message = "you saved 0 tokens"
+			} else if len(s.winners) < maxTeams {
 				message = fmt.Sprintf("you saved %d tokens", len(s.winners))
+			} else {
+				message = "you saved all the tokens"
 			}
 		}
 	}
