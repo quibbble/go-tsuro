@@ -336,16 +336,18 @@ func (s *state) score() {
 							}
 						}
 					}
-					// find the max number of crossings for each team
+					// sort by team and add all the scores together
 					tilePoints := make(map[string]int)
 					for path, score := range pathScores {
 						team := tile.Paths[path]
 						if tilePoints[team] < score {
-							tilePoints[team] = score
+							tilePoints[team] += score
 						}
 					}
 					for team, score := range tilePoints {
-						points[team] += score
+						// divide by two to fix overcounting
+						// see: https://github.com/quibbble/go-tsuro/issues/1
+						points[team] += score / 2
 					}
 				}
 			}
