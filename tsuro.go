@@ -178,9 +178,10 @@ func (t *Tsuro) GetSnapshot(team ...string) (*bg.BoardGameSnapshot, error) {
 
 func (t *Tsuro) GetBGN() *bgn.Game {
 	tags := map[string]string{
-		"Game":  key,
-		"Teams": strings.Join(t.state.teams, ", "),
-		"Seed":  fmt.Sprintf("%d", t.options.Seed),
+		"Game":    key,
+		"Teams":   strings.Join(t.state.teams, ", "),
+		"Variant": t.options.Variant,
+		"Seed":    fmt.Sprintf("%d", t.options.Seed),
 	}
 	actions := make([]bgn.Action, 0)
 	for _, action := range t.actions {

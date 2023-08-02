@@ -20,7 +20,7 @@ func newBoard() *board {
 }
 
 func (b *board) Place(tile *tile, row, col int) error {
-	if row >= rows || col >= columns {
+	if row < 0 || col < 0 || row >= rows || col >= columns {
 		return fmt.Errorf("index out of bounds")
 	}
 	if b.board[row][col] != nil {

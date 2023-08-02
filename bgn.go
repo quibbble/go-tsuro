@@ -14,7 +14,7 @@ var (
 )
 
 func (p *PlaceTileActionDetails) encodeBGN() []string {
-	return []string{strconv.Itoa(p.Row), strconv.Itoa(p.Column), strconv.Itoa(indexOf(tiles, p.Tile))}
+	return []string{strconv.Itoa(p.Row), strconv.Itoa(p.Column), p.Tile}
 }
 
 func decodePlaceTileActionDetailsBGN(notation []string) (*PlaceTileActionDetails, error) {
@@ -29,17 +29,11 @@ func decodePlaceTileActionDetailsBGN(notation []string) (*PlaceTileActionDetails
 	if err != nil {
 		return nil, loadFailure(err)
 	}
-	tileIndex, err := strconv.Atoi(notation[2])
-	if err != nil {
-		return nil, loadFailure(err)
-	}
-	if tileIndex < 0 || tileIndex >= len(tiles) {
-		return nil, loadFailure(fmt.Errorf("got %d but want index between %d and %d when decoding %s action", tileIndex, 0, len(tiles), ActionPlaceTile))
-	}
+	tile := notation[2]
 	return &PlaceTileActionDetails{
 		Row:    row,
 		Column: column,
-		Tile:   tiles[tileIndex],
+		Tile:   tile,
 	}, nil
 }
 
