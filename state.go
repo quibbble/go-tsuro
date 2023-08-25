@@ -340,9 +340,7 @@ func (s *state) score() {
 					tilePoints := make(map[string]int)
 					for path, score := range pathScores {
 						team := tile.Paths[path]
-						if tilePoints[team] < score {
-							tilePoints[team] += score
-						}
+						tilePoints[team] += score
 					}
 					for team, score := range tilePoints {
 						// divide by two to fix overcounting
