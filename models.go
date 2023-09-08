@@ -115,8 +115,8 @@ var crossing = map[string][]string{
 	"DF": {"EA", "EB", "EC", "EG", "EH", "AE", "BE", "CE", "GE", "HE"},
 	"FD": {"EA", "EB", "EC", "EG", "EH", "AE", "BE", "CE", "GE", "HE"},
 
-	"DG": {"EA", "EB", "EC", "EH", "FA", "FB", "FC", "FH", "AE", "BE", "CE", "CH", "AF", "BF", "CF", "HF"},
-	"GD": {"EA", "EB", "EC", "EH", "FA", "FB", "FC", "FH", "AE", "BE", "CE", "CH", "AF", "BF", "CF", "HF"},
+	"DG": {"EA", "EB", "EC", "EH", "FA", "FB", "FC", "FH", "AE", "AF", "BE", "BF", "CE", "CF", "HE", "HF"},
+	"GD": {"EA", "EB", "EC", "EH", "FA", "FB", "FC", "FH", "AE", "AF", "BE", "BF", "CE", "CF", "HE", "HF"},
 
 	"DH": {"GA", "GB", "GC", "FA", "FB", "FC", "EA", "EB", "EC", "AG", "BG", "CG", "AF", "BF", "CF", "AE", "BE", "CE"},
 	"HD": {"GA", "GB", "GC", "FA", "FB", "FC", "EA", "EB", "EC", "AG", "BG", "CG", "AF", "BF", "CF", "AE", "BE", "CE"},

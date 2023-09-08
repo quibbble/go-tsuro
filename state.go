@@ -323,29 +323,8 @@ func (s *state) score() {
 		for _, row := range s.board.board {
 			for _, tile := range row {
 				if tile != nil {
-					// calculates the number of times path of the same team cross on a tile
-					pathScores := make(map[string]int)
-					for path1, team1 := range tile.Paths {
-						for path2, team2 := range tile.Paths {
-							if path1 == path2 {
-								continue
-							}
-							// check if same team and paths cross
-							if team1 == team2 && contains(crossing[path1], path2) {
-								pathScores[path1]++
-							}
-						}
-					}
-					// sort by team and add all the scores together
-					tilePoints := make(map[string]int)
-					for path, score := range pathScores {
-						team := tile.Paths[path]
-						tilePoints[team] += score
-					}
-					for team, score := range tilePoints {
-						// divide by two to fix overcounting
-						// see: https://github.com/quibbble/go-tsuro/issues/1
-						points[team] += score / 2
+					for _, team := range s.teams {
+						points[team] += tile.countCrossings(team)
 					}
 				}
 			}

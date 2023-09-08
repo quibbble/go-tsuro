@@ -3,14 +3,14 @@ package go_tsuro
 import "fmt"
 
 /*
-   tile representation
+tile representation
 
-            A  B
-           ——  ——
-       H |        | C
-       G |        | D
-           ——  ——
-            F  E
+	     A  B
+	    ——  ——
+	H |        | C
+	G |        | D
+	    ——  ——
+	     F  E
 */
 type tile struct {
 	Edges string            // defines the tile
@@ -61,6 +61,24 @@ func (t *tile) RotateLeft() {
 		transformed += transform[string(char)]
 	}
 	t.Edges = transformed
+}
+
+func (t *tile) countCrossings(team string) int {
+	paths := make([]string, 0)
+	for path, t := range t.Paths {
+		if team == t {
+			paths = append(paths, path)
+		}
+	}
+	count := 0
+	for i, path := range paths {
+		for j, otherPath := range paths {
+			if i != j && contains(crossing[path], otherPath) {
+				count++
+			}
+		}
+	}
+	return count / 2
 }
 
 func (t *tile) equals(t2 *tile) bool {
