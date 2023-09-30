@@ -31,7 +31,7 @@ func (b *Builder) Load(game *bgn.Game) (bg.BoardGameWithBGN, error) {
 	}
 	teams := strings.Split(teamsStr, ", ")
 	variantStr := game.Tags["Variant"]
-	if variantStr != "" || !contains(Variants, variantStr) {
+	if !(variantStr == "" || contains(Variants, variantStr)) {
 		return nil, loadFailure(fmt.Errorf("invalid variant value"))
 	}
 	seedStr, ok := game.Tags["Seed"]
