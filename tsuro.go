@@ -48,7 +48,7 @@ func NewTsuro(options *bg.BoardGameOptions) (*Tsuro, error) {
 	}
 	if details.Variant == "" {
 		details.Variant = VariantClassic
-	} else if !contains(Variants, details.Variant) {
+	} else if !contains(variants, details.Variant) {
 		return nil, &bgerr.Error{
 			Err:    fmt.Errorf("invalid Tsuro variant"),
 			Status: bgerr.StatusInvalidOption,

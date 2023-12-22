@@ -16,12 +16,17 @@ const (
 	VariantSolo          = "Solo"          // place tiles while keeping all tokens on the board
 )
 
-var Variants = []string{VariantClassic, VariantLongestPath, VariantMostCrossings, VariantOpenTiles, VariantSolo}
+var variants = []string{VariantClassic, VariantLongestPath, VariantMostCrossings, VariantOpenTiles, VariantSolo}
 
 // TsuroMoreOptions are the additional options for creating a game of Tsuro
 type TsuroMoreOptions struct {
 	Seed    int64
 	Variant string
+}
+
+// TsuroMoreInfo provides additional info about the game
+type TsuroMoreInfo struct {
+	Variants []string
 }
 
 // RotateTileActionDetails is the action details for rotating a tile in hand
